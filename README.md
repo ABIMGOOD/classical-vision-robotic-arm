@@ -1,234 +1,316 @@
-cat > README.md <<'EOF'
+
 # Classical Vision Robotic Arm
 
-**Classical computer vision for red-object detection and shape-based classification, as the first stage of a future robotic-arm sorting system.**
+**A classical computer vision project for real-time object detection, feature extraction, and object classification — laying the groundwork for vision-guided robotic manipulation.**
 
-> **Status: In development.** The current prototype performs webcam-based colour segmentation, geometric feature extraction, Decision Tree classification, and image-pixel centre localisation. Arduino integration, camera calibration, inverse kinematics, and automated pick-and-place remain future work.
+<p align="center">
+  <img src="images/realtime_detection.png" alt="Real-time object classification" width="80%">
+</p>
 
-## Sample Results
+<p align="center">
+  <img src="https://img.shields.io/badge/Computer%20Vision-OpenCV-5C3EE8?logo=opencv&logoColor=white" alt="OpenCV">
+  <img src="https://img.shields.io/badge/Machine%20Learning-Scikit--learn-F7931E?logo=scikitlearn&logoColor=white" alt="Scikit-learn">
+  <img src="https://img.shields.io/badge/Language-Python-3776AB?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Approach-Classical%20Vision-2E8B57" alt="Classical vision">
+  <img src="https://img.shields.io/badge/Status-Prototype-orange" alt="Prototype">
+</p>
 
-### 1. HSV Colour Segmentation
+## Overview
 
-![Colour segmentation using OpenCV](images/color-segmentation.png)
+This project explores how conventional computer vision and lightweight machine learning can be used to detect and classify objects in a live camera feed.
 
-Red objects are segmented using HSV thresholding. Two hue intervals are combined because red wraps around the hue boundary in OpenCV's HSV colour representation. A separate yellow mask is also explored.
+The system uses colour segmentation to isolate red objects, extracts geometric and shape-based features from detected contours, and applies a trained Decision Tree classifier to distinguish between selected object categories.
 
-### 2. Real-Time Object Classification
+The longer-term objective is to connect visual perception with a physical robotic arm, enabling detected objects to be located in the camera frame and eventually mapped to robot coordinates for manipulation.
 
-![Real-time object classification](images/realtime-classification.png)
+The current implementation focuses on the **perception and classification stage**. Camera-to-robot calibration, inverse kinematics, and physical pick-and-place integration remain future development tasks.
 
-The live pipeline detects red contours, extracts shape features, predicts an object class, and displays the detected centre in image pixels.
+## Project Goals
 
-### 3. Classifier Demonstration
+- Develop a real-time classical computer vision pipeline using OpenCV.
+- Detect objects using HSV colour segmentation and contour analysis.
+- Extract interpretable geometric features from detected objects.
+- Train a lightweight machine learning classifier using labelled examples.
+- Display predicted object classes and bounding boxes in a live camera feed.
+- Establish a foundation for future vision-guided robotic manipulation.
 
-![Classifier screenshot](images/classifier-screenshot.png)
-
-These images show the current development prototype. Results may vary with lighting, background, object orientation, and whether objects touch or overlap.
-
-## Project Overview
-
-This project investigates a lightweight, interpretable approach to object recognition without deep learning. It currently distinguishes three red objects with similar colours but different shapes:
-
-- `container_red` — red container
-- `screwdriver` — screwdriver with a red handle
-- `safety_cutter` — red safety cutter
-
-Colour segmentation identifies candidate regions. Contours describe their shapes, and a supervised Decision Tree classifier uses geometric measurements to predict the object class.
-
-The longer-term goal is to connect vision with a small robotic arm for object sorting. The planned next stages are servo-control testing, image-to-table calibration, inverse kinematics, and an integrated pick-and-place demonstration.
-
-## System Architecture
+## System Pipeline
 
 ```text
-USB Webcam
-    |
-    v
-BGR Image -> HSV Colour Conversion
-    |
-    v
-Red Thresholding (two hue ranges)
-    |
-    v
-Morphological Opening and Closing
-    |
-    v
-Contour Detection and Small-Contour Filtering
-    |
-    v
+Camera Input
+     |
+     v
+Frame Acquisition
+     |
+     v
+HSV Colour Conversion
+     |
+     v
+Red Colour Segmentation
+     |
+     v
+Binary Mask and Morphological Filtering
+     |
+     v
+Contour Detection
+     |
+     v
 Geometric Feature Extraction
-    |
-    v
+     |
+     v
 Trained Decision Tree Classifier
-    |
-    v
-Predicted Label + Centre (cx, cy) in Image Pixels
+     |
+     v
+Predicted Class + Bounding Box + Centroid
+     |
+     v
+Future Work: Camera-to-Robot Coordinate Mapping
+     |
+     v
+Future Work: Inverse Kinematics and Robot Control
+```
 
-Important: (cx, cy) represents pixel coordinates in the camera image, not physical coordinates on the table. A calibration transform is required before these coordinates can be used to position a robot arm.
+## Demonstrations
+
+### 1. Colour segmentation
+
+HSV thresholding isolates red regions from the camera image. Separate hue ranges are used to account for red appearing near both ends of the HSV hue scale.
+
+![Colour segmentation](images/color_segmentation.png)
+
+### 2. Binary masks and contour detection
+
+The segmented image is converted into a binary mask. Contours are extracted and filtered by area to reduce detections caused by small regions of noise.
+
+![Binary mask](images/binary_masks.png)
+
+### 3. Real-time object classification
+
+The trained classifier predicts the class of each detected red object using extracted shape and geometry features. The live display shows the predicted label and detected object's bounding box.
+
+![Real-time detection](images/realtime_detection.png)
+
+> **Note:** If a screenshot does not appear, check that its filename and capitalisation match the actual file in the `images/` directory. GitHub paths are case-sensitive.
+
+## Object Classes
+
+The current labelled dataset contains three classes:
+
+| Class label | Description |
+|---|---|
+| `container_red` | Red container |
+| `safety_cutter` | Safety cutter |
+| `screwdriver` | Screwdriver |
+
+The classifier uses shape and geometric measurements rather than a deep neural network.
 
 ## Technology Stack
 
-Technology	Purpose
-Python	Main programming language
-OpenCV	Webcam access, HSV conversion, thresholding, morphology, contour detection and visualisation
-NumPy	Image arrays and numerical feature inputs
-pandas	Loading and preparing the labelled dataset
-scikit-learn	Train/test split, Decision Tree classifier and model evaluation
-joblib	Saving and loading the trained model
-CSV	Storing labelled geometric features
-USB webcam	Image acquisition
-Ubuntu Linux	Development environment
+| Technology | Purpose |
+|---|---|
+| Python | Main programming language |
+| OpenCV | Camera input, image processing, segmentation, and contour detection |
+| NumPy | Numerical operations and image-array processing |
+| pandas | Dataset loading and manipulation |
+| scikit-learn | Decision Tree training and evaluation |
+| joblib | Saving and loading the trained model |
 
-## Geometric Features
-The classifier uses eight features calculated from each contour:
-Feature	Description
-area	Contour area in pixel-squared units
-width	Width of the bounding rectangle, in pixels
-height	Height of the bounding rectangle, in pixels
-aspect_ratio	Bounding-rectangle width divided by height
-perimeter	Contour perimeter, in pixels
-circularity	4π × area / perimeter², a measure related to shape roundness
-solidity	Contour area divided by convex-hull area
-extent	Contour area divided by bounding-rectangle area
-These measurements describe object geometry rather than relying on colour alone. They can change with viewpoint, scale, image resolution, segmentation quality, and partial occlusion.
-Repository Contents
-File	Purpose
-color_segmentation.py	Interactive red/yellow HSV segmentation and basic contour measurements
-collect_training_data.py	Collects labelled geometric-feature examples
-geometry_features.py	Earlier version of the feature-extraction and data-collection script
-train_classifier.py	Trains and evaluates the Decision Tree and saves the model
-realtime_classifier_live.py	Live classification using the saved model
-test.py	Original development version of the live classifier
-red_objects.csv	Labelled feature dataset
-red_object_classifier.joblib	Saved model and expected feature order
-camera_test.ipynb	Webcam experimentation notebook
-images/	Project screenshots
-requirements.txt	Python dependencies
-.gitignore	Excludes common generated and local files
-LICENSE	MIT licence
-Some scripts overlap because the project is still being organised. They are retained while the code structure is refined.
-Installation
-Requirements
-- Python 3.8 or later is recommended, subject to dependency compatibility.
-- A webcam accessible to OpenCV.
-- The repository and its dataset.
-Clone the repository:
-git clone https://github.com/ABIMGOOD/classical-vision-robotic-arm.git
-cd classical-vision-robotic-arm
+The current approach deliberately uses **classical computer vision and conventional machine learning**, rather than deep learning, to keep the pipeline lightweight and its intermediate processing steps interpretable.
 
+## Feature Engineering
 
-Create and activate a virtual environment:
-python3 -m venv .venv
-source .venv/bin/activate
+For each detected contour, the system extracts the following features:
 
+| Feature | Description |
+|---|---|
+| `area` | Contour area in pixels |
+| `width` | Bounding-box width |
+| `height` | Bounding-box height |
+| `aspect_ratio` | Width divided by height |
+| `perimeter` | Contour perimeter |
+| `circularity` | Shape measure based on area and perimeter |
+| `solidity` | Contour area relative to its convex hull |
+| `extent` | Contour area relative to its bounding-box area |
 
-Install the packages:
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+These features provide a compact numerical representation of each object. The trained Decision Tree learns patterns in these measurements to distinguish between the labelled classes.
 
+Because the features depend on the camera view, object orientation, lighting, and segmentation quality, classification performance can vary when these conditions change.
 
-On Ubuntu, if virtual-environment support is missing, install the appropriate python3-venv system package and retry.
-Running the Project
-Run commands from the repository root so relative paths resolve correctly.
-1. Colour segmentation
-python color_segmentation.py
+## Dataset and Model Training
 
+The dataset is stored in `red_objects.csv`. Each labelled observation contains geometric features extracted from a detected object and its corresponding class label.
 
-Displays the camera image and red/yellow masks. Clicking the original-image window prints the selected pixel's HSV values. Press q to quit.
-2. Collect labelled examples
-python collect_training_data.py
+The training script:
 
+1. Loads the labelled dataset.
+2. Selects the eight engineered features.
+3. Removes rows with missing feature or label values.
+4. Splits the data into training and test subsets using a stratified split.
+5. Trains a Decision Tree classifier with a maximum depth of four.
+6. Evaluates predictions using accuracy, a classification report, and a confusion matrix.
+7. Saves the trained model and feature list to `red_object_classifier.joblib`.
 
-Place one clearly separated red object in view and press:
-- 1 — red container
-- 2 — screwdriver
-- 3 — safety cutter
-- q — quit
-The script records features from the largest eligible red contour and appends them to red_objects.csv. Ensure the intended object is the largest red region and is not touching another object. Inspect the CSV before retraining.
-3. Train and evaluate
-python train_classifier.py
+The saved model is loaded by the live classification script, avoiding the need to retrain the classifier every time the camera application starts.
 
+### Reported evaluation
 
-The script loads red_objects.csv, prepares the eight features, and creates a stratified 75/25 train/test split using random_state=42. It trains a DecisionTreeClassifier with max_depth=4, prints accuracy, a classification report and a confusion matrix, then saves red_object_classifier.joblib.
-4. Live classification
-python realtime_classifier_live.py
+An earlier evaluation produced the following confusion matrix:
 
-
-Loads the saved model, segments red regions, extracts contour features, predicts labels, and draws bounding boxes and image-pixel centres. Press q to quit.
-Camera selection
-The current scripts use camera index 1. If the wrong camera opens or no camera is found, change cv2.VideoCapture(1) or CAMERA_INDEX = 1 to 0 or another valid index for your system.
-Initial Model Evaluation
-An earlier development run produced this confusion matrix:
+```text
 [[14  0  0]
  [ 0 15  0]
  [ 0  0 17]]
+```
 
+For that evaluation split, all 46 test samples were classified correctly.
 
-The class order was container_red, safety_cutter, screwdriver. This corresponds to 46 correct predictions out of 46 test examples (100% on that split).
-This is an initial result, not proof of real-world generalisation. Samples captured under similar conditions can make a random split easier than testing on genuinely new scenes. More reliable evaluation should use separate capture sessions and varied lighting, backgrounds, positions, and orientations. Run the training script to calculate metrics for the dataset currently in the repository.
-Known Limitations
-- Touching objects: external contours may merge multiple objects into one shape, leading to incorrect predictions.
-- Lighting: HSV thresholds may need tuning for different illumination and camera exposure.
-- Colour dependence: the trained classifier currently targets red objects. The yellow mask is an experiment, not a trained yellow-object classifier.
-- Largest-contour collection: only the largest eligible red contour is labelled by the data-collection script.
-- Viewpoint and scale: geometric measurements change with object orientation, distance, and image resolution.
-- Pixel coordinates: image centres have not yet been calibrated to physical table coordinates.
-- Robot integration: servo control, inverse kinematics, and an integrated pick-and-place cycle are not yet implemented.
-Roadmap
-- [x] Capture webcam frames with OpenCV.
-- [x] Segment red regions in HSV colour space.
-- [x] Extract geometric contour features.
-- [x] Collect labelled examples in CSV format.
-- [x] Train and save a Decision Tree classifier.
-- [x] Display live predictions and pixel centres.
-- [ ] Improve dataset diversity and evaluate on separate capture sessions.
-- [ ] Improve segmentation of touching and overlapping objects.
-- [ ] Test Arduino and servo control on the bench.
-- [ ] Calibrate image pixels to positions on a flat work surface.
-- [ ] Implement and test robot-arm inverse kinematics.
-- [ ] Integrate perception and pick-and-place control.
-Reproducibility and Data
-The CSV stores manually labelled geometric measurements rather than raw images. The .joblib file is a Python model artifact; only load model files from trusted sources. For reproducible evaluation, inspect the dataset, run the training script, and test with data captured separately from the training examples.
-Contributing
-Suggestions and issue reports are welcome. Useful future contributions include improved segmentation, automated evaluation, clearer separation of data collection and inference, camera calibration, and feature-extraction tests. Please include steps to reproduce any reported issue.
-Licence
-Released under the MIT License. See LICENSE. Third-party code, datasets, and assets may have separate terms that should be checked before reuse.
+**Important:** This result represents one evaluation on the collected dataset. It does not establish generalisation to unseen environments, different cameras, changing lighting, or new object instances. More varied data and repeated evaluation are needed for a robust performance estimate.
 
-This repository documents an ongoing engineering project. Results and roadmap items will be updated as implementation and testing progress.
-EOF
+## Repository Structure
 
-## Step 3 — Create the MIT licence
+```text
+classical-vision-robotic-arm/
+├── images/
+│   ├── color_segmentation.png
+│   ├── binary_masks.png
+│   ├── realtime_detection.png
+│   └── ...
+├── notebooks/
+│   └── camera_test.ipynb
+├── src/
+│   ├── color_segmentation.py
+│   ├── collect_training_data.py
+│   ├── geometry_features.py
+│   ├── train_classifier.py
+│   ├── realtime_classifier_live.py
+│   └── test.py
+├── red_objects.csv
+├── red_object_classifier.joblib
+├── requirements.txt
+├── .gitignore
+└── README.md
+```
 
-Run:
+`collect_training_data.py` and `geometry_features.py` currently serve overlapping data-collection purposes. `test.py` and `realtime_classifier_live.py` also contain overlapping live-inference functionality; these can be consolidated as the project matures.
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3
+- A compatible webcam
+- Git
+- A working Python environment with camera access
+
+### 1. Clone the repository
 
 ```bash
-cat > LICENSE <<'EOF'
-MIT License
+git clone https://github.com/ABIMGOOD/classical-vision-robotic-arm.git
+cd classical-vision-robotic-arm
+```
 
-Copyright (c) 2026 ABIMGOOD
+### 2. Create a virtual environment
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+If virtual-environment support is missing on Ubuntu, install it with:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-EOF
+```bash
+sudo apt update
+sudo apt install python3-venv
+```
 
+### 3. Install dependencies
 
-Step 4 — Verify the files
-Run:
-wc -l README.md
-head -n 25 README.md
-ls -lh README.md LICENSE
-git status --short
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Test the camera
+
+Open the camera notebook in Jupyter, or run an appropriate camera test script from the `src/` directory.
+
+For example:
+
+```bash
+python3 src/color_segmentation.py
+```
+
+The current scripts use camera index `1` in their camera configuration. If your webcam is assigned a different index, update the relevant script accordingly.
+
+### 5. Train the classifier
+
+```bash
+python3 src/train_classifier.py
+```
+
+The training script should read `red_objects.csv` from the project root and save the resulting model to `red_object_classifier.joblib` in the project root.
+
+If your current script uses an absolute path to a local CSV file, change it to a project-relative path before running it:
+
+```python
+pd.read_csv("red_objects.csv")
+```
+
+### 6. Run real-time classification
+
+```bash
+python3 src/realtime_classifier_live.py
+```
+
+Ensure the saved model is available at the path expected by the script and that the correct webcam is selected.
+
+**Troubleshooting:** If the script reports that the CSV or model cannot be found, check the paths in the script. This README assumes the dataset and model remain in the repository root.
+
+## Current Limitations
+
+- **Colour dependence:** the current detection pipeline focuses on red objects.
+- **Contour merging:** touching or overlapping objects may be detected as a single contour.
+- **Viewpoint sensitivity:** rotation, perspective, and occlusion can change extracted geometric features.
+- **Lighting sensitivity:** illumination and reflections can affect HSV segmentation.
+- **Dataset coverage:** the classifier is trained on a limited, manually collected dataset.
+- **Camera calibration:** image coordinates are not yet calibrated to physical table coordinates.
+- **Robot integration:** the current pipeline does not yet execute autonomous pick-and-place actions.
+
+These limitations define the next engineering steps rather than being claims of completed functionality.
+
+## Roadmap
+
+- [x] Live camera acquisition with OpenCV
+- [x] HSV-based red object segmentation
+- [x] Contour detection and geometric feature extraction
+- [x] Labelled training-data collection
+- [x] Decision Tree training and evaluation
+- [x] Saved-model inference in a live camera feed
+- [ ] Consolidate duplicate scripts and standardise file paths
+- [ ] Expand the dataset across object instances, orientations, and lighting conditions
+- [ ] Evaluate generalisation using more robust validation
+- [ ] Improve handling of overlapping objects
+- [ ] Calibrate the camera for table-plane coordinate estimation
+- [ ] Map image coordinates to robot workspace coordinates
+- [ ] Implement inverse kinematics and Arduino communication
+- [ ] Test controlled pick-and-place behaviour on the physical robotic arm
+
+## Future Direction: Vision-Guided Manipulation
+
+The intended next stage is to transform the detected object centroid from image pixels into a coordinate on the robot's workspace.
+
+That process will require camera calibration and a suitable coordinate transformation. The resulting target position can then be used by a robot-control pipeline that accounts for the arm's geometry, reachable workspace, and inverse kinematics.
+
+The current classifier is a perception prototype and does not yet perform these operations. The aim is to develop the project incrementally, validating each stage before integrating it with physical hardware.
+
+## Author
+
+**Goodness Abimbola**
+
+Mechatronics Engineering | Robotics | Computer Vision | Control Systems
+
+- GitHub: [@ABIMGOOD](https://github.com/ABIMGOOD)
+- Project repository: [classical-vision-robotic-arm](https://github.com/ABIMGOOD/classical-vision-robotic-arm)
+
+## License
+
+See the repository's `LICENSE` file for licensing terms.
